@@ -4,35 +4,43 @@
 -- =============================================
 -- Purpose: Extract from Bronze, clean and load
 --          into Silver tables
--- Cleaning applied:
---   - CAST for data type conversions
---   - TRY_CAST for safe conversions on dirty data
---   - TRIM to remove leading/trailing spaces
---   - CASE WHEN ISNUMERIC for mixed data columns
---   - LEFT() to handle malformed rows
+-- Approach: Transformations based on profiling
+--           evidence only - not assumptions
 -- =============================================
 
 
 -- =============================================
 -- Step 1: Load Silver Customer
--- Cleaning: CAST all columns to proper types
--- No nulls found, no spaces, no mixed data
+-- =============================================
+-- Transformations applied:
+--   - SELECT DISTINCT → remove duplicates
+--   - CAST dates → DATE type
+--   - CAST numbers → proper types
+--   - is_future_order flag → 403 future dates found
+-- NOT applied:
+--   - TRIM → profiling showed 0 spaces
 -- =============================================
 
+TRUNCATE TABLE silver.customer;
+
 INSERT INTO silver.customer
-SELECT
+SELECT DISTINCT
     customer_id,
-    CAST(acquisition_date    AS DATE),
+    CAST(acquisition_date AS DATE),
     CAST(acquisition_cost_usd AS DECIMAL(10,2)),
     market_segment,
     supplier_id,
     order_id,
-    CAST(order_date          AS DATE),
-    CAST(order_value_usd     AS DECIMAL(10,2)),
-    CAST(payment_date        AS DATE),
-    CAST(satisfaction_score  AS INT),
-    CAST(support_tickets     AS INT),
-    CAST(lead_time_days      AS INT)
+    CAST(order_date AS DATE),
+    CAST(order_value_usd AS DECIMAL(10,2)),
+    CAST(payment_date AS DATE),
+    CAST(satisfaction_score AS INT),
+    CAST(support_tickets AS INT),
+    CAST(lead_time_days AS INT),
+    CASE 
+        WHEN CAST(order_date AS DATE) > GETDATE() THEN 1
+        ELSE 0
+    END AS is_future_order
 FROM bronze.customer;
 
 -- Verify Customer Load
@@ -43,37 +51,47 @@ FROM silver.customer;
 
 -- =============================================
 -- Step 2: Load Silver Shipment
--- Cleaning applied:
---   - TRIM on o_country, d_country (leading spaces found)
---   - TRY_CAST for safe date and value conversion
---   - CASE WHEN ISNUMERIC for customs_clearance_time_days
---     (contains mixed data - floats AND text)
---   - LEFT(50) on delivery_status
---     (malformed row SHP-2024-0010 found)
--- Data Quality Issues:
---   - Every 9th row: delivery status in wrong column
---   - Every 10th row: entire row malformed
---   - Root cause: Suspected source system export bug
+-- =============================================
+-- Transformations applied:
+--   - SELECT DISTINCT → remove duplicates
+--   - TRIM(o_country) → 704 rows had leading spaces
+--   - TRIM(d_country) → 680 rows had leading spaces
+--   - CASE WHEN ISNUMERIC(d_country) → 24 numeric values
+--   - TRY_CAST(date AS DATE) → safe date conversion
+--   - TRY_CAST(value AS INT) → safe conversion
+--   - TRY_CAST(freight_cost AS DECIMAL) → safe conversion
+--   - CASE WHEN ISNUMERIC(customs_clearance_time_days)
+--     → 24 non-numeric values found
+--   - CASE WHEN delivery_status NOT IN → 24 invalid values
 -- =============================================
 
+TRUNCATE TABLE silver.shipment;
+
 INSERT INTO silver.shipment
-SELECT
+SELECT DISTINCT
     shipment_id,
     type,
-    TRY_CAST(date            AS DATE),
+    TRY_CAST(date AS DATE),
     product_category,
     origin,
     TRIM(o_country),
     destination,
-    TRIM(d_country),
-    TRY_CAST(value           AS INT),
-    TRY_CAST(freight_cost    AS DECIMAL(10,2)),
+    CASE
+        WHEN ISNUMERIC(d_country) = 1 THEN NULL
+        ELSE TRIM(d_country)
+    END,
+    TRY_CAST(value AS INT),
+    TRY_CAST(freight_cost AS DECIMAL(10,2)),
     CASE
         WHEN ISNUMERIC(customs_clearance_time_days) = 1
             THEN CAST(customs_clearance_time_days AS DECIMAL(10,2))
         ELSE NULL
     END,
-    LEFT(delivery_status, 50)
+    CASE
+        WHEN delivery_status IN ('On-Time', 'Delayed')
+            THEN delivery_status
+        ELSE NULL
+    END
 FROM bronze.shipment;
 
 -- Verify Shipment Load
@@ -84,21 +102,28 @@ FROM silver.shipment;
 
 -- =============================================
 -- Step 3: Load Silver Logistics Performance
--- Cleaning: CAST all columns to proper types
--- No nulls, no spaces, no mixed data found
--- date renamed to performance_date
+-- =============================================
+-- Transformations applied:
+--   - SELECT DISTINCT → remove duplicates
+--   - CAST date → DATE type
+--   - CAST numbers → proper types
+-- NOT applied:
+--   - TRIM → profiling showed 0 spaces
+--   - No issues found in profiling
 -- =============================================
 
+TRUNCATE TABLE silver.logistics_performance;
+
 INSERT INTO silver.logistics_performance
-SELECT
-    CAST(date                          AS DATE),
+SELECT DISTINCT
+    CAST(date AS DATE),
     region,
     carrier,
-    CAST(shipments_processed           AS INT),
-    CAST(delay_hours_avg               AS DECIMAL(10,2)),
-    CAST(fuel_price_usd_per_barrel     AS DECIMAL(10,2)),
+    CAST(shipments_processed AS INT),
+    CAST(delay_hours_avg AS DECIMAL(10,2)),
+    CAST(fuel_price_usd_per_barrel AS DECIMAL(10,2)),
     CAST(warehouse_utilization_percent AS INT),
-    CAST(damage_claims_count           AS INT)
+    CAST(damage_claims_count AS INT)
 FROM bronze.logistics_performance;
 
 -- Verify Logistics Performance Load
@@ -112,23 +137,24 @@ FROM silver.logistics_performance;
 -- Bronze vs Silver counts must match!
 -- =============================================
 
-SELECT 'bronze.customer'              AS table_name,
-        COUNT(*)                      AS row_count
+SELECT 
+    'bronze.customer' AS table_name,
+    COUNT(*) AS row_count
 FROM bronze.customer
 UNION ALL
-SELECT 'silver.customer',               COUNT(*)
+SELECT 'silver.customer', COUNT(*)
 FROM silver.customer
 UNION ALL
-SELECT 'bronze.shipment',               COUNT(*)
+SELECT 'bronze.shipment', COUNT(*)
 FROM bronze.shipment
 UNION ALL
-SELECT 'silver.shipment',               COUNT(*)
+SELECT 'silver.shipment', COUNT(*)
 FROM silver.shipment
 UNION ALL
-SELECT 'bronze.logistics_performance',  COUNT(*)
+SELECT 'bronze.logistics_performance', COUNT(*)
 FROM bronze.logistics_performance
 UNION ALL
-SELECT 'silver.logistics_performance',  COUNT(*)
+SELECT 'silver.logistics_performance', COUNT(*)
 FROM silver.logistics_performance;
 
 -- Expected Results:
