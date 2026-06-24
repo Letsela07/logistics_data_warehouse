@@ -56,13 +56,13 @@ FROM silver.customer;
 --   - SELECT DISTINCT → remove duplicates
 --   - TRIM(o_country) → 704 rows had leading spaces
 --   - TRIM(d_country) → 680 rows had leading spaces
---   - CASE WHEN ISNUMERIC(d_country) → 24 numeric values
---   - TRY_CAST(date AS DATE) → safe date conversion
---   - TRY_CAST(value AS INT) → safe conversion
---   - TRY_CAST(freight_cost AS DECIMAL) → safe conversion
---   - CASE WHEN ISNUMERIC(customs_clearance_time_days)
---     → 24 non-numeric values found
---   - CASE WHEN delivery_status NOT IN → 24 invalid values
+--   - CASE WHEN ISNUMERIC(d_country) → 24 malformed rows
+--     Singapore rows had data shifted one column right
+--     d_country contained shipment_value
+--     value contained freight_cost
+--     freight_cost contained customs_clearance_days
+--     customs_clearance_time_days contained delivery_status
+--   - Singapore destination_country fixed to 'Singapore'
 -- =============================================
 
 TRUNCATE TABLE silver.shipment;
@@ -76,29 +76,52 @@ SELECT DISTINCT
     origin,
     TRIM(o_country),
     destination,
-    CASE
-        WHEN ISNUMERIC(d_country) = 1 THEN NULL
+    -- destination_country fix
+    CASE 
+        WHEN ISNUMERIC(d_country) = 1 
+            THEN 'Singapore'
         ELSE TRIM(d_country)
-    END,
-    TRY_CAST(value AS INT),
-    TRY_CAST(freight_cost AS DECIMAL(10,2)),
-    CASE
-        WHEN ISNUMERIC(customs_clearance_time_days) = 1
-            THEN CAST(customs_clearance_time_days AS DECIMAL(10,2))
-        ELSE NULL
-    END,
-    CASE
-        WHEN delivery_status IN ('On-Time', 'Delayed')
-            THEN delivery_status
-        ELSE NULL
-    END
+    END AS destination_country,
+    -- shipment_value fix
+    CASE 
+        WHEN ISNUMERIC(d_country) = 1 
+            THEN CAST(d_country AS INT)
+        ELSE CAST(value AS INT)
+    END AS shipment_value,
+    -- freight_cost fix
+    CASE 
+        WHEN ISNUMERIC(d_country) = 1 
+            THEN CAST(value AS DECIMAL(10,2))
+        ELSE CAST(freight_cost AS DECIMAL(10,2))
+    END AS freight_cost,
+    -- customs_clearance_days fix
+    CASE 
+        WHEN ISNUMERIC(d_country) = 1 
+            THEN CAST(freight_cost AS DECIMAL(10,2))
+        ELSE
+            CASE
+                WHEN ISNUMERIC(customs_clearance_time_days) = 1
+                    THEN CAST(customs_clearance_time_days AS DECIMAL(10,2))
+                ELSE NULL
+            END
+    END AS customs_clearance_days,
+    -- delivery_status fix
+    CASE 
+        WHEN ISNUMERIC(d_country) = 1 
+            THEN customs_clearance_time_days
+        ELSE
+            CASE
+                WHEN delivery_status IN ('On-Time', 'Delayed')
+                    THEN delivery_status
+                ELSE NULL
+            END
+    END AS delivery_status
 FROM bronze.shipment;
 
--- Verify Shipment Load
+-- Verify
 SELECT COUNT(*) AS silver_shipment_count
 FROM silver.shipment;
 -- Expected: 704
-
 
 -- =============================================
 -- Step 3: Load Silver Logistics Performance
