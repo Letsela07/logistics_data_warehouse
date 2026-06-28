@@ -106,16 +106,18 @@ SELECT DISTINCT
             END
     END AS customs_clearance_days,
     -- delivery_status fix
-    CASE 
-        WHEN ISNUMERIC(d_country) = 1 
-            THEN customs_clearance_time_days
-        ELSE
-            CASE
-                WHEN delivery_status IN ('On-Time', 'Delayed')
-                    THEN delivery_status
-                ELSE NULL
-            END
-    END AS delivery_status
+CASE 
+    WHEN ISNUMERIC(d_country) = 1 
+        THEN LTRIM(RTRIM(
+            LEFT(customs_clearance_time_days,
+                CHARINDEX(CHAR(13), customs_clearance_time_days + CHAR(13)) - 1)
+            ))
+    ELSE
+        LTRIM(RTRIM(
+            LEFT(delivery_status,
+                CHARINDEX(CHAR(13), delivery_status + CHAR(13)) - 1)
+            ))
+END AS delivery_status
 FROM bronze.shipment;
 
 -- Verify
