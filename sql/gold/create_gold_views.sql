@@ -49,7 +49,7 @@ SELECT
     ROW_NUMBER() OVER (ORDER BY product_category) AS product_id,
     product_category
 FROM (
-    SELECT DISTINCT product_category
+    SELECT DISTINCT product_categorya
     FROM silver.shipment
     WHERE product_category IS NOT NULL
 ) AS products;
