@@ -49,7 +49,7 @@ logistics_data_warehouse/
 
 ## Current Progress
 
-### Completed ✅
+### Completed 
 - Project planning and folder structure
 - Business requirements analysis
 - Warehouse architecture design
@@ -62,15 +62,21 @@ logistics_data_warehouse/
 - Silver layer — all 3 tables cleaned and loaded
   - Proper data types applied
   - Columns renamed for clarity
-  - Data quality issues identified and handled
+  - Data quality issues identified and fixed
+  - 24 malformed Singapore rows reconstructed
+  - Carriage return characters cleaned
+- Gold layer — complete!!
+  - 10 dimension views created
+  - 3 fact views created
+  - Star Schema implemented
 
 ### In Progress 🔄
-- Gold layer dimensional models
+- Stored Procedures
+- Power BI Dashboard
 
 ### Planned 📋
-- Power BI dashboards
-- Stored procedures for automation
 - Python ETL scripts
+- Azure deployment
 
 ## Data Quality Issues Found
 - Leading spaces in country columns → fixed with TRIM()
