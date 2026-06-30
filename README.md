@@ -49,7 +49,7 @@ logistics_data_warehouse/
 
 ## Current Progress
 
-### Completed 
+### Completed ✅
 - Project planning and folder structure
 - Business requirements analysis
 - Warehouse architecture design
@@ -65,18 +65,42 @@ logistics_data_warehouse/
   - Data quality issues identified and fixed
   - 24 malformed Singapore rows reconstructed
   - Carriage return characters cleaned
-- Gold layer — complete!!
+- Gold layer — complete
   - 10 dimension views created
   - 3 fact views created
-  - Star Schema implemented
+  - date_id surrogate key implemented
+  - Foreign key integrity validated
+  - Star Schema fully implemented
+- Stored Procedures
+  - usp_load_silver — automates Bronze to Silver
+    transformation with logging and error handling
+  - pipeline_log table for monitoring runs
 
 ### In Progress 🔄
-- Stored Procedures
-- Power BI Dashboard
+- Python ETL automation (collaboration with 
+  Lwando Sokhanyile)
+  - Replacing manual BULK INSERT with Python
+  - Triggering stored procedures from Python
+  - Data quality validation pre-load
+  - Logging and monitoring enhancements
 
 ### Planned 📋
-- Python ETL scripts
-- Azure deployment
+- Power BI Dashboard
+- Incremental loading
+- Airflow orchestration
+
+## Collaborators
+- Lebohang Letsela — Data Warehouse Architecture, 
+  SQL Server, Star Schema Design
+- Lwando Sokhanyile — Python ETL, AWS Cloud Integration
+
+## How to Run the Pipeline
+
+1. Run sql/bronze/create_bronze_tables.sql
+2. Run sql/bronze/load_bronze_data.sql
+3. Run sql/silver/create_silver_tables.sql
+4. Execute stored procedure: EXEC dbo.usp_load_silver
+5. Run sql/gold/create_gold_views.sql
 
 ## Data Quality Issues Found
 - Leading spaces in country columns → fixed with TRIM()
