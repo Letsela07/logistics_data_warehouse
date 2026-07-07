@@ -1,6 +1,7 @@
 from db_connection import get_engine
 from extract import extract_all_data
 from load_bronze import truncate_bronze_tables, load_bronze_tables
+from execute_procedures import load_silver_layer
 
 
 def main():
@@ -13,7 +14,9 @@ def main():
     truncate_bronze_tables(engine)
     load_bronze_tables(engine, dataframes)
 
-    print("Bronze load completed successfully")
+    load_silver_layer(engine)
+
+    print("ETL pipeline completed successfully")
 
 
 if __name__ == "__main__":
