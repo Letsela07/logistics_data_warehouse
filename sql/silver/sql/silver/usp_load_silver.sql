@@ -1,4 +1,4 @@
-ALTER PROCEDURE dbo.usp_load_silver
+CREATE OR ALTER PROCEDURE dbo.usp_load_silver
 AS
 BEGIN
     SET NOCOUNT ON;

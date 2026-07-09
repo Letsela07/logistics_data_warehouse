@@ -11,6 +11,7 @@ def truncate_bronze_tables(engine):
     with engine.begin() as conn:
         for table in tables:
             conn.execute(text(f"TRUNCATE TABLE {table}"))
+            print(f"Truncated {table}")
 
 
 def load_bronze_tables(engine, dataframes):
@@ -29,6 +30,7 @@ def load_bronze_tables(engine, dataframes):
             schema=schema,
             if_exists="append",
             index=False,
+            chunksize=100,
         )
 
         print(f"Loaded {len(df)} rows into {schema}.{table_name}")
