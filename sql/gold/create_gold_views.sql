@@ -14,6 +14,40 @@
 
 
 -- =============================================
+-- dim_date
+-- Source: All Silver tables
+-- Combines all dates into one dimension
+-- Includes date_id surrogate key for proper
+-- Star Schema foreign key relationships
+-- =============================================
+
+CREATE OR ALTER VIEW gold.dim_date AS
+SELECT
+    ROW_NUMBER() OVER (ORDER BY full_date) AS date_id,
+    full_date,
+    YEAR(full_date) AS year,
+    MONTH(full_date) AS month,
+    DATEPART(QUARTER, full_date) AS quarter
+FROM (
+    SELECT CAST(acquisition_date AS DATE) AS full_date
+    FROM silver.customer
+    UNION
+    SELECT CAST(order_date AS DATE)
+    FROM silver.customer
+    UNION
+    SELECT CAST(payment_date AS DATE)
+    FROM silver.customer
+    UNION
+    SELECT CAST(shipment_date AS DATE)
+    FROM silver.shipment
+    UNION
+    SELECT CAST(performance_date AS DATE)
+    FROM silver.logistics_performance
+) AS all_dates
+WHERE full_date IS NOT NULL;
+
+
+-- =============================================
 -- dim_location
 -- Source: silver.shipment
 -- Combines origin and destination locations
@@ -49,7 +83,7 @@ SELECT
     ROW_NUMBER() OVER (ORDER BY product_category) AS product_id,
     product_category
 FROM (
-    SELECT DISTINCT product_categorya
+    SELECT DISTINCT product_category
     FROM silver.shipment
     WHERE product_category IS NOT NULL
 ) AS products;
@@ -166,37 +200,6 @@ FROM (
 
 
 -- =============================================
--- dim_date
--- Source: All Silver tables
--- Combines all dates into one dimension
--- =============================================
-
-CREATE OR ALTER VIEW gold.dim_date AS
-SELECT DISTINCT
-    full_date,
-    YEAR(full_date) AS year,
-    MONTH(full_date) AS month,
-    DATEPART(QUARTER, full_date) AS quarter
-FROM (
-    SELECT CAST(acquisition_date AS DATE) AS full_date
-    FROM silver.customer
-    UNION
-    SELECT CAST(order_date AS DATE)
-    FROM silver.customer
-    UNION
-    SELECT CAST(payment_date AS DATE)
-    FROM silver.customer
-    UNION
-    SELECT CAST(shipment_date AS DATE)
-    FROM silver.shipment
-    UNION
-    SELECT CAST(performance_date AS DATE)
-    FROM silver.logistics_performance
-) AS all_dates
-WHERE full_date IS NOT NULL;
-
-
--- =============================================
 -- FACT VIEWS
 -- =============================================
 
@@ -206,6 +209,7 @@ WHERE full_date IS NOT NULL;
 -- Source: silver.shipment
 -- Joins: dim_date, dim_product, dim_location,
 --        dim_shipment_type, dim_delivery_status
+-- Uses date_id surrogate key (not full_date)
 -- =============================================
 
 CREATE OR ALTER VIEW gold.fact_shipments AS
@@ -214,7 +218,7 @@ SELECT
     s.shipment_id,
 
     -- Foreign Keys
-    d.full_date AS shipment_date,
+    d.date_id AS shipment_date_id,
     p.product_id,
     ol.location_id AS origin_location_id,
     dl.location_id AS destination_location_id,
@@ -253,6 +257,7 @@ LEFT JOIN gold.dim_delivery_status ds
 -- fact_orders
 -- Source: silver.customer
 -- Joins: dim_customer, dim_date, dim_supplier
+-- Uses date_id surrogate key (not full_date)
 -- =============================================
 
 CREATE OR ALTER VIEW gold.fact_orders AS
@@ -263,9 +268,9 @@ SELECT
     -- Foreign Keys
     cs.customer_id,
     sp.supplier_id,
-    acq.full_date AS acquisition_date,
-    ord.full_date AS order_date,
-    pay.full_date AS payment_date,
+    acq.date_id AS acquisition_date_id,
+    ord.date_id AS order_date_id,
+    pay.date_id AS payment_date_id,
 
     -- Measures
     c.acquisition_cost_usd,
@@ -297,6 +302,7 @@ LEFT JOIN gold.dim_supplier sp
 -- fact_logistics_performance
 -- Source: silver.logistics_performance
 -- Joins: dim_date, dim_region, dim_carrier
+-- Uses date_id surrogate key (not full_date)
 -- =============================================
 
 CREATE OR ALTER VIEW gold.fact_logistics_performance AS
@@ -309,7 +315,7 @@ SELECT
     ) AS performance_id,
 
     -- Foreign Keys
-    d.full_date AS performance_date,
+    d.date_id AS performance_date_id,
     r.region_id,
     cr.carrier_id,
 
@@ -343,11 +349,30 @@ WHERE table_schema = 'gold'
 ORDER BY table_name;
 
 -- Verify row counts
-SELECT 'fact_shipments' AS view_name, COUNT(*) AS row_count 
+SELECT 'fact_shipments' AS view_name, COUNT(*) AS row_count
 FROM gold.fact_shipments
 UNION ALL
-SELECT 'fact_orders', COUNT(*) 
+SELECT 'fact_orders', COUNT(*)
 FROM gold.fact_orders
 UNION ALL
-SELECT 'fact_logistics_performance', COUNT(*) 
+SELECT 'fact_logistics_performance', COUNT(*)
 FROM gold.fact_logistics_performance;
+
+-- Validate date_id foreign keys (should return zero rows each)
+SELECT DISTINCT f.shipment_date_id
+FROM gold.fact_shipments AS f
+LEFT JOIN gold.dim_date AS d
+    ON d.date_id = f.shipment_date_id
+WHERE d.date_id IS NULL;
+
+SELECT DISTINCT f.acquisition_date_id
+FROM gold.fact_orders AS f
+LEFT JOIN gold.dim_date AS d
+    ON d.date_id = f.acquisition_date_id
+WHERE d.date_id IS NULL;
+
+SELECT DISTINCT f.performance_date_id
+FROM gold.fact_logistics_performance AS f
+LEFT JOIN gold.dim_date AS d
+    ON d.date_id = f.performance_date_id
+WHERE d.date_id IS NULL;
