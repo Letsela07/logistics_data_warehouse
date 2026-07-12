@@ -13,10 +13,10 @@ def read_csv_file(filename: str) -> pd.DataFrame:
 
     df = pd.read_csv(file_path)
 
-    # Clean column names
+
     df.columns = df.columns.str.strip()
 
-    # Clean text values
+    
     for col in df.select_dtypes(include="object").columns:
         df[col] = df[col].str.strip()
 
