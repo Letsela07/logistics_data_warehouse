@@ -16,21 +16,31 @@
 -- =============================================
 
 -- Bronze: Raw data as-is from source
-CREATE SCHEMA IF NOT EXISTS bronze;
+IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'bronze')
+BEGIN
+    EXEC('CREATE SCHEMA bronze');
+END;
+GO
 
--- Silver: Cleaned and standardized data
-CREATE SCHEMA IF NOT EXISTS silver;
+IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'silver')
+BEGIN
+    EXEC('CREATE SCHEMA silver');
+END;
+GO
 
--- Gold: Business ready Star Schema
-CREATE SCHEMA IF NOT EXISTS gold;
+IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'gold')
+BEGIN
+    EXEC('CREATE SCHEMA gold');
+END;
+GO
 
 
 -- =============================================
 -- Step 2: Drop Existing Bronze Tables
 -- =============================================
 
-DROP TABLE IF EXISTS bronze.customer;
-DROP TABLE IF EXISTS bronze.shipment;
+DROP TABLE IF EXISTS bronze.customer; 
+DROP TABLE IF EXISTS bronze.shipment; 
 DROP TABLE IF EXISTS bronze.logistics_performance;
 
 
