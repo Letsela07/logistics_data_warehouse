@@ -1,0 +1,20 @@
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: logistics-sqlserver
+    restart: unless-stopped
+
+    env_file:
+      - .env.docker
+
+    environment:
+      ACCEPT_EULA: "Y"
+
+    ports:
+      - "1433:1433"
+
+    volumes:
+      - logistics_sqlserver_data_fresh:/var/opt/mssql
+
+volumes:
+  logistics_sqlserver_data_fresh:

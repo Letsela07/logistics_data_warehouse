@@ -3,6 +3,7 @@ from execute_procedures import load_silver_layer
 from extract import extract_all_data
 from load_bronze import load_bronze_tables, truncate_bronze_tables
 from logger import get_logger
+from s3 import upload_all_datasets
 
 logger = get_logger()
 
@@ -19,6 +20,10 @@ def main():
 
         for name, df in dataframes.items():
             logger.info("Extracted %s rows from %s", len(df), name)
+
+        logger.info("Uploading raw data to S3")
+        upload_all_datasets()
+        logger.info("Raw data uploaded to S3 successfully")
 
         logger.info("Loading Bronze tables")
         truncate_bronze_tables(engine)

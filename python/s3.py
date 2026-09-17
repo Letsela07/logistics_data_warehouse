@@ -26,18 +26,18 @@ def upload_file(filename: str, s3_key: str):
     print(f"Uploaded {filename} → s3://{S3_BUCKET_NAME}/{s3_key}")
 
 
+def upload_all_datasets():
+    datasets = {
+        "customer.csv": "raw_data/customer/customer.csv",
+        "shipment.csv": "raw_data/shipment/shipment.csv",
+        "logistics_performance.csv": (
+            "raw_data/logistics_performance/logistics_performance.csv"
+        ),
+    }
+
+    for filename, s3_key in datasets.items():
+        upload_file(filename, s3_key)
+
+
 if __name__ == "__main__":
-    upload_file(
-        "customer.csv",
-        "raw_data/customer/customer.csv",
-    )
-
-    upload_file(
-        "shipment.csv",
-        "raw_data/shipment/shipment.csv",
-    )
-
-    upload_file(
-        "logistics_performance.csv",
-        "raw_data/logistics_performance/logistics_performance.csv",
-    )
+    upload_all_datasets()
