@@ -10,3 +10,6 @@ DB_DATABASE = os.getenv("DB_DATABASE")
 DB_DRIVER = os.getenv("DB_DRIVER")
 DB_USERNAME = os.getenv("DB_USERNAME")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
+
+AWS_REGION = os.getenv("AWS_REGION")
+S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
