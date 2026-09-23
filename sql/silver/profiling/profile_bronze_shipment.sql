@@ -18,7 +18,7 @@ FROM bronze.shipment;
 -- =============================================
 -- 2. shipment_id
 -- Type: Text | Check: uniqueness, nulls, spaces
--- Result: 704 unique, clean ✅
+-- Historical profiling result: 704 unique, clean ✅
 -- =============================================
 
 SELECT 
