@@ -45,6 +45,7 @@ FROM (
     FROM silver.logistics_performance
 ) AS all_dates
 WHERE full_date IS NOT NULL;
+GO
 
 
 -- =============================================
@@ -71,6 +72,7 @@ FROM (
     FROM silver.shipment
     WHERE destination IS NOT NULL
 ) AS locations;
+GO
 
 
 -- =============================================
@@ -87,6 +89,7 @@ FROM (
     FROM silver.shipment
     WHERE product_category IS NOT NULL
 ) AS products;
+GO
 
 
 -- =============================================
@@ -103,6 +106,7 @@ FROM (
     FROM silver.shipment
     WHERE shipment_type IS NOT NULL
 ) AS shipment_types;
+GO
 
 
 -- =============================================
@@ -119,7 +123,7 @@ FROM (
     FROM silver.shipment
     WHERE delivery_status IS NOT NULL
 ) AS statuses;
-
+GO
 
 -- =============================================
 -- dim_market_segment
@@ -135,6 +139,7 @@ FROM (
     FROM silver.customer
     WHERE market_segment IS NOT NULL
 ) AS segments;
+GO
 
 
 -- =============================================
@@ -151,6 +156,7 @@ FROM (
     FROM silver.customer
     WHERE supplier_id IS NOT NULL
 ) AS suppliers;
+GO
 
 
 -- =============================================
@@ -165,6 +171,7 @@ SELECT
     acquisition_date,
     acquisition_cost_usd
 FROM silver.customer;
+GO
 
 
 -- =============================================
@@ -181,6 +188,7 @@ FROM (
     FROM silver.logistics_performance
     WHERE carrier IS NOT NULL
 ) AS carriers;
+GO
 
 
 -- =============================================
@@ -197,6 +205,7 @@ FROM (
     FROM silver.logistics_performance
     WHERE region IS NOT NULL
 ) AS regions;
+GO
 
 
 -- =============================================
@@ -251,6 +260,7 @@ LEFT JOIN gold.dim_shipment_type st
 
 LEFT JOIN gold.dim_delivery_status ds
     ON s.delivery_status = ds.delivery_status;
+ GO   
 
 
 -- =============================================
@@ -296,7 +306,7 @@ LEFT JOIN gold.dim_date pay
 
 LEFT JOIN gold.dim_supplier sp
     ON c.supplier_id = sp.supplier_id;
-
+GO
 
 -- =============================================
 -- fact_logistics_performance
@@ -336,7 +346,7 @@ LEFT JOIN gold.dim_region r
 
 LEFT JOIN gold.dim_carrier cr
     ON lp.carrier = cr.carrier;
-
+GO
 
 -- =============================================
 -- VERIFICATION

@@ -22,7 +22,7 @@ Medallion Architecture (Bronze → Silver → Gold).
 
 ## Data Sources
 - customer.csv — 750 records
-- shipment.csv — 704 records
+- shipment.csv — 728 records
 - logistics_performance.csv — 100 records
 
 ## Architecture
@@ -57,7 +57,7 @@ logistics_data_warehouse/
 - GitHub repository setup
 - Bronze layer — all 3 tables loaded
   - 750 customer records
-  - 704 shipment records
+  - 728 shipment records
   - 100 logistics performance records
 - Silver layer — all 3 tables cleaned and loaded
   - Proper data types applied

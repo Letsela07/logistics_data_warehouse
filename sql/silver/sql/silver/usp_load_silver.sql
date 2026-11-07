@@ -137,7 +137,7 @@ BEGIN
         VALUES (
             'usp_load_silver', 'Load Silver Shipment', 'Silver',
             'bronze.shipment', 'silver.shipment', @start_time, @end_time,
-            @row_count_before, @row_count_after, 704,
+            @row_count_before, @row_count_after, 728,
             'SUCCESS'
         );
 

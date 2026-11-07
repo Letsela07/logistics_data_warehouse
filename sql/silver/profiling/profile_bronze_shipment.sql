@@ -18,7 +18,7 @@ FROM bronze.shipment;
 -- =============================================
 -- 2. shipment_id
 -- Type: Text | Check: uniqueness, nulls, spaces
--- Result: 704 unique, clean ✅
+-- Historical profiling result: 704 unique, clean ✅
 -- =============================================
 
 SELECT 
@@ -111,7 +111,7 @@ FROM bronze.shipment;
 -- =============================================
 -- 7. o_country
 -- Type: Text | Check: distinct, nulls, spaces, empty
--- ⚠️ ISSUE: ALL 704 rows have leading spaces
+-- ⚠️ ISSUE: ALL 704 historically profiled rows had leading spaces
 -- Fix: TRIM(o_country) in Silver
 -- =============================================
 
@@ -265,12 +265,12 @@ FROM bronze.shipment;
 -- =============================================
 -- BRONZE SHIPMENT PROFILING SUMMARY
 -- =============================================
--- shipment_id   → clean, 704 unique ✅
+-- shipment_id   → clean, 704 unique (historical) ✅
 -- type          → clean ✅
 -- date          → clean, 2024-2025 ✅
 -- product_category → 4 clean categories ✅
 -- origin        → 15 clean cities ✅
--- o_country     → ⚠️ ALL 704 rows have leading spaces
+-- o_country     → ⚠️ ALL 704 historically profiled rows had leading spaces
 -- destination   → clean ✅
 -- d_country     → ⚠️ spaces + 24 numeric values
 -- value         → clean, 3250-415000 ✅
